@@ -107,7 +107,7 @@ Gesture-driven “pointing” motion using the GoFa's 6-DOF arm and the articula
 ## **Gesture Recognition Code**
 
 <p align="center">
-  <img src="docs/images/docs/images/gesture_recognition.png" width="350">
+  <img src="docs/images/gesture_recognition.png" width="350">
 </p>
 
 <p align="center"><em>
@@ -117,7 +117,7 @@ This logic enables real-time interpretation of human hand poses.
 </em></p>
 
 <p align="center">
-  <img src="docs/images/docs/images/finger_tips_and_dips.png" width="350">
+  <img src="docs/images/finger_tips_and_dips.png" width="350">
 </p>
 
 <p align="center"><em>
