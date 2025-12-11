@@ -26,11 +26,13 @@ OpenCV + MediaPipe are used for gesture recognition, and ROS nodes translate the
 
 This project includes:
 
-- Custom 3D robot modeling  
-- URDF/Xacro creation  
-- Real-time gesture recognition  
-- ROS Noetic integration  
-- Gazebo simulation with ROS Control  
+# Features
+- Real-time gesture recognition (MediaPipe + OpenCV)
+- Fully custom RobotStudio-designed arm and robotic hand
+- ROS Noetic control pipeline with Gazebo simulation
+- 6-DOF ABB GoFa extension with hand attachment
+- PID-controlled joint motion
+
 
 ---
 
@@ -84,18 +86,6 @@ The robot reacts to the detected "fist" gesture by closing all fingers and adjus
 ### Pointing
 <p align="center">
   <img src="images/gofa_pointing.png" width="350">
-</p>
-
----
-
-## URDF Integration Visuals
-
-<p align="center">
-  <img src="images/hand_attachment_gofa.png" width="350">
-</p>
-
-<p align="center">
-  <img src="images/gofa_attachment.png" width="350">
 </p>
 
 ---
@@ -286,6 +276,8 @@ The robot will mirror them inside Gazebo.
 
 The custom hand can be mounted on an ABB GoFa robot.  
 A dedicated Xacro handles flange → palm transformation.
+Note: The official ABB GoFa URDF is not included because it is proprietary.
+The extension Xacro provided here shows how the custom hand attaches to the robot flange.
 
 ### GoFa joint controller configuration
 <p align="center">
