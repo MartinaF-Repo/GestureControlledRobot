@@ -52,9 +52,7 @@ RobotStudio → Mesh Export → URDF/Xacro → Gazebo → ROS Control
 
 # Screenshots Showcase
 
-(*All images use your original centered HTML syntax*)
-
-## **Custom 2-Link Robot Poses**
+## **Custom 2-Link Robot Poses Examples**
 
 ### Neutral Pose
 <p align="center">
@@ -76,21 +74,7 @@ The robot reacts to the detected "fist" gesture by closing all fingers and adjus
 
 ---
 
-## URDF Visuals
-
-### Palm and Wrist URDF
-<p align="center">
-  <img src="images/hand_urdf_block1.png" width="350">
-</p>
-
-### Wrist Joint URDF
-<p align="center">
-  <img src="images/hand_urdf_block2.png" width="350">
-</p>
-
----
-
-## **GoFa Extension Poses**
+## **GoFa Extension Poses Examples**
 
 ### Open Palm
 <p align="center">
@@ -100,38 +84,6 @@ The robot reacts to the detected "fist" gesture by closing all fingers and adjus
 ### Pointing
 <p align="center">
   <img src="images/gofa_pointing.png" width="350">
-</p>
-
----
-
-## Gesture Recognition Code Visuals
-
-<p align="center">
-  <img src="images/gesture_recognition.png" width="350">
-</p>
-
-<p align="center">
-  <img src="images/finger_tips_and_dips.png" width="350">
-</p>
-
----
-
-## ROS Control Visuals
-
-<p align="center">
-  <img src="images/gesture_to_robot_class_2links.png" width="350">
-</p>
-
-<p align="center">
-  <img src="images/publishers_2link.png" width="350">
-</p>
-
-<p align="center">
-  <img src="images/gesture_to_robot_pub.png" width="350">
-</p>
-
-<p align="center">
-  <img src="images/gesture_callback_gofa.png" width="350">
 </p>
 
 ---
@@ -211,32 +163,100 @@ gesture_recognition.py  →  /gesture_topic  →  gesture_to_robot.py  →  Gaze
 # Code Overview
 
 ## **gesture_recognition.py — Real-Time Gesture Detection**
-Uses MediaPipe + OpenCV to classify hand gestures.  
-Publishes results to `/gesture_topic`.
+This script implements the complete OpenCV + MediaPipe gesture-recognition pipeline used to control the robot.
+It performs real-time webcam capture, extracts MediaPipe’s 21 hand landmarks, classifies gestures using geometric rules, and publishes the recognized gesture to /gesture_topic.
+
+Key features:
+- Webcam capture optimized for low-latency (320×240, frame skipping, time-based throttling)
+- MediaPipe Hands model for landmark detection (single-hand tracking)
+- Custom rule-based gesture classifier:
+  -OPEN_PALM
+  - FIST
+  - VICTORY
+  - POINTING
+- ROS publisher that streams recognized gestures as std_msgs/String
+- On-screen visualization of landmarks and gesture labels
+- Memory and performance safeguards (garbage collection, minimal CPU load)
+
+This node is the entry point of the user-interaction pipeline: it converts human gestures into symbolic commands that the robot controller can act upon.
 
 ## **gesture_to_robot.py — Gesture → Joint Commands**
-Maps gestures to robot poses and sends joint commands.
+This ROS node subscribes to /gesture_topic and converts gesture messages into joint-level actuation commands for the robot arm, wrist, and all six finger joints.
+Main components:
+- Publishers for:
+  - joint1, joint2
+  - wrist_joint
+  - finger{i}_joint{j} for all three fingers
+- A subscriber that listens for gesture messages (String)
+- Robust gesture-to-motion mappings:
+  - OPEN_PALM → arm neutral, wrist rotated, all fingers open
+  - FIST → fingers fully closed, characteristic curled shape
+  - VICTORY → two-finger pose with customized angles
+  - POINTING → index-like configuration with selected finger extension
+- Automatic wait for Gazebo simulation time to become active
+- Centralized logging for debugging each motion command
+
+This script forms the bridge between perception and actuation, transforming gesture recognition into coordinated robot movement.
 
 ## **controller.yaml — Joint Controllers**
-Defines all PID‑controlled joint interfaces for Gazebo.
+This file defines all Gazebo ROS-Control position controllers used by the robot arm, wrist, and each finger.
+Every joint is assigned a JointPositionController with PID parameters tuned for stable and responsive motion in simulation.
 
 ## **gazebo.launch — Simulation Startup**
-Starts Gazebo, loads the URDF, spawns the robot, loads controllers, and initializes pose.
+This launch file initializes the full Gazebo simulation environment and loads the custom robot into the world. It performs several key operations:
+- Starts an empty Gazebo world using gazebo_ros
+- Loads the URDF/Xacro robot description into the robot_description parameter
+- Launches both joint_state_publisher and robot_state_publisher
+- Spawns the robot model at the desired coordinates in the simulated world
+- Loads all joint controllers from controller.yaml
+- Registers PID gains for each joint under /gazebo_ros_control/pid_gains/
+- Spawns all controllers via controller_manager
+- Sends initial joint positions to place the robot in a default pose at startup
+
+This file is the main entry point for running the robot simulation in Gazebo.
 
 ## **gesture.launch — Gesture Nodes Startup**
-Starts both gesture recognition and gesture listener nodes.
+This launch file starts the two ROS nodes responsible for gesture-based control:
+
+- gesture_recognition.py
+  Runs the OpenCV + MediaPipe pipeline that detects hand gestures in real time and publishes them to /gesture_topic.
+
+- gesture_listener.py
+  Subscribes to the gesture topic and converts recognized gestures into robot joint commands.
+  
+A startup delay is included to avoid overloading ROS nodes at initialization.
+
+This file provides the complete gesture-processing layer and can be started independently from Gazebo if needed. 
 
 ## **display.launch — URDF RViz Viewer**
-Loads the robot into RViz for debugging.
+This launch file loads the robot’s URDF model and opens RViz for visualization.
+It performs:
+- Loading the URDF/Xacro into robot_description
+- Starting joint_state_publisher and robot_state_publisher
+- Launching RViz to display the robot, useful for debugging link placements, joint origins, and TF frames
+
+This file is used during robot modeling and debugging to confirm correct URDF structure before running the full simulation.
 
 ## **my_robot.urdf.xacro — Custom URDF Model**
-Defines:
-- arm  
-- wrist  
-- articulated fingers  
-- transmissions  
-- inertial & visual geometry  
-- Gazebo ROS control plugin  
+This URDF/Xacro file defines the full robot used in the project: a 2-DOF arm, a revolute wrist, and a 3-finger articulated hand (each finger with 2 joints).
+It models geometry, inertial values, joint limits, transmissions, and the Gazebo control interface.
+Main components:
+- Arm
+  - Two modular arm links generated via the arm_link macro
+  - Revolute joints: joint1 (base → link1), joint2 (link1 → link2)
+  - Inertial properties
+- Wrist + Hand
+  -palm_link with box geometry
+  - wrist_joint (link2 → palm) enabling expressive hand rotation
+  - finger macro that generates:
+    - link1 and link2
+    - joints finger{i}_joint1 and finger{i}_joint2
+    - configurable positions on the palm
+- Transmissions + Gazebo
+  - SimpleTransmission for every joint → enables ROS Control
+  - gazebo_ros_control plugin for hardware interface integration
+
+This URDF is the core model used by Gazebo and ROS controllers to simulate the robot’s kinematics and motion dynamics.
 
 ---
 
@@ -267,12 +287,41 @@ The robot will mirror them inside Gazebo.
 The custom hand can be mounted on an ABB GoFa robot.  
 A dedicated Xacro handles flange → palm transformation.
 
-### **GoFa integration code snippet (screenshot)**  
+### GoFa joint controller configuration
 <p align="center">
-  <img src="images/gofa_code_snippet.png" width="450">
+  <img src="images/controllers_gofa.png" width="350">
+</p>
+<p align="center"><em>
+Extended PID-based JointPositionControllers used to actuate the ABB GoFa robot joints (j1–j6).
+</em></p>
+
+### GoFa joint publishers in gesture controller
+<p align="center">
+  <img src="images/publishers_gofa_joints.png" width="350">
+</p>
+<p align="center"><em>
+ROS publishers for all six GoFa joints added to the gesture controller.
+</em></p>
+
+### GoFa → custom hand URDF integration
+<p align="center">
+  <img src="images/gofa_attachment.png" width="350">
 </p>
 
-(*Ensure `gofa_code_snippet.png` exists in the `images/` folder.*)
+<p align="center">
+  <img src="images/hand_attachment_gofa.png" width="350">
+</p>
+<p align="center"><em>
+URDF/Xacro snippet showing the flange-to-palm transformation used to mount the custom hand on the ABB GoFa robot.
+</em></p>
+
+### Gesture → GoFa motion mapping
+<p align="center">
+  <img src="images/gesture_callback_gofa.png" width="350">
+</p>
+<p align="center"><em>
+Gesture callback extended to drive 6-DOF GoFa arm + custom 3-finger hand.
+</em></p>
 
 ---
 
