@@ -110,6 +110,7 @@ The ROS node `gesture_recognition.py` performs:
 4. Publishing gestures via `/gesture_topic`
 
 Supported gestures:
+
 - **OPEN_PALM**
 - **FIST**
 - **VICTORY**
