@@ -36,6 +36,16 @@ This project includes:
 
 ---
 
+# Demo Videos
+
+### Custom 2‑link arm demo  
+https://github.com/user-attachments/assets/1a98822c-5cdd-445d-8f07-4513d8f4a0a6
+
+### ABB GoFa + custom hand demo  
+https://github.com/user-attachments/assets/7cfdb598-449e-4499-a33b-7a44478776d9
+
+---
+
 # Robot Modeling (RobotStudio → URDF)
 
 The robot consists of:
@@ -317,15 +327,6 @@ Gesture callback extended to drive 6-DOF GoFa arm + custom 3-finger hand.
 
 ---
 
-# Gesture‑controlled Demo Videos
-
-### Custom 2‑link arm demo  
-https://github.com/user-attachments/assets/1a98822c-5cdd-445d-8f07-4513d8f4a0a6
-
-### ABB GoFa + custom hand demo  
-https://github.com/user-attachments/assets/7cfdb598-449e-4499-a33b-7a44478776d9
-
----
 
 # License
 MIT License
